@@ -154,4 +154,4 @@ Codex can then summarize accessible pages or PDFs you provide, but it should not
 
 ## License
 
-Add your preferred license before publishing. If you want compatibility with the referenced daily literature digest skill, MIT is a reasonable default.
+MIT. See [LICENSE](LICENSE).
