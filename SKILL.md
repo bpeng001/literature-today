@@ -1,6 +1,6 @@
 ---
 name: literature-today
-description: Create, update, run, or troubleshoot a reusable daily literature digest that expands research topics and keywords, searches Crossref/OpenAlex/arXiv, filters relevant high-impact journal articles plus accepted preprints, archives Markdown or optional DOCX digests, and sends daily email summaries through Gmail. Use when the user asks for daily or scheduled literature monitoring, keyword/topic paper alerts, high-impact paper digests, arXiv/preprint-inclusive research updates, topic-plus-keyword search combinations, or automated Gmail literature summaries.
+description: Create, update, run, or troubleshoot a reusable daily literature digest that expands research topics and keywords, searches Crossref/OpenAlex/arXiv, filters relevant high-impact journal articles plus accepted preprints, archives Markdown or optional DOCX digests, and sends daily email summaries through Gmail in English or Chinese. Use when the user asks for daily or scheduled literature monitoring, keyword/topic paper alerts, high-impact paper digests, arXiv/preprint-inclusive research updates, topic-plus-keyword search combinations, Chinese/English digest emails, or automated Gmail literature summaries.
 ---
 
 # Literature Today
@@ -15,10 +15,10 @@ Do not read paywalled full text or auto-login to publisher, university, or libra
 
 1. Confirm or infer settings:
    - Recipient email.
-   - Digest language.
+   - Digest language. If the user says "Use Chinese", set `language` to `zh-CN` and write the Markdown archive and email body in Chinese.
    - Timezone and daily schedule.
    - Workspace path and Python command.
-   - Sources: Crossref/OpenAlex by default; arXiv when `include_arxiv` and `accept_preprints` are true.
+   - Sources: Crossref/OpenAlex by default; enable preprint mode with `include_arxiv` plus `accept_preprints`.
    - Journal/preprint policy: high-impact journal whitelist plus accepted preprints by default.
    - Keyword groups and optional topic-keyword combination groups.
 2. Copy `scripts/literature_today.py` into the user's workspace.
@@ -67,7 +67,7 @@ Treat matching as inclusive during fetch, but strict during final selection.
 Include a paper in the main digest only when it passes the configured policy:
 
 - `high_impact_only`: journal articles must match `high_impact_journals` or `high_impact_journal_prefixes`.
-- `accept_preprints`: arXiv/preprint records can pass the venue filter when enabled.
+- `include_arxiv` plus `accept_preprints`: query arXiv and allow relevant preprints to pass the venue filter.
 - `relevant_only`: remove query-only, title-only, weakly matched, and off-topic records.
 - `require_direct_keyword_match`: require title, abstract, or subject metadata evidence.
 - `require_abstract`: require an abstract for unattended summary.
@@ -78,6 +78,13 @@ If no papers pass, still write and send a concise no-results digest. Do not rela
 ## Summary Rules
 
 Use only title, abstract, keywords, subject tags, DOI, journal/source, authors, publisher, source metadata, and open metadata in the JSON. Mark arXiv records clearly as preprints.
+
+Write the digest and Gmail body in the configured language:
+
+- `en`: English.
+- `zh-CN`, `zh`, or "Chinese": Simplified Chinese.
+
+When writing in Chinese, translate the interpretation fields, section headings, notes, relevance assessment, and next actions into Chinese. Keep paper titles, journal names, author names, DOI/URL, arXiv IDs, and exact source metadata unchanged unless a clear Chinese translation is already conventional.
 
 For each included paper, report:
 
@@ -100,6 +107,7 @@ The automation prompt must include:
 - Exact config path.
 - Exact fetch command using `--config`.
 - Recipient email, language, schedule time, timezone, and output directory.
+- Explicit instruction to write the Markdown archive and Gmail email body in the configured language, including Chinese when requested.
 - Original user keywords and a note that expanded terms live in `keyword_groups`.
 - Topic-keyword combination instructions when `topic_keyword_groups` is configured.
 - Instruction to summarize open metadata/abstracts only.

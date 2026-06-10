@@ -1,4 +1,4 @@
 interface:
   display_name: "Literature Today"
   short_description: "Daily high-signal literature digest automation"
-  default_prompt: "Create or update a daily literature digest that expands research topics and keywords, filters relevant high-impact papers and accepted preprints, archives Markdown, and sends the result by Gmail."
+  default_prompt: "Create or update a daily English or Chinese literature digest that expands research topics and keywords, filters relevant high-impact papers and preprints, archives Markdown, and sends the result by Gmail."

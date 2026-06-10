@@ -11,8 +11,9 @@ This repository is inspired by the structure of [`xuezheng627/daily-literature-d
 - Expands broad keyword groups automatically, such as turning `measles outbreak analysis` into related terms like `measles outbreak`, `measles transmission`, `measles epidemic`, and `measles vaccination coverage`.
 - Supports topic-plus-keyword combination searches, such as `infectious disease && neural network` or `epidemic modeling && machine learning`.
 - Filters journal articles to a configurable high-impact journal whitelist.
-- Allows arXiv/preprint records when `include_arxiv` and `accept_preprints` are enabled.
+- Supports a preprint mode with `include_arxiv` plus `accept_preprints`.
 - Summarizes only open metadata and abstracts during unattended runs.
+- Writes and emails the digest in English or Chinese, based on the setup request.
 - Writes local archives under `daily-literature-digests/`.
 - Sends the concise digest through the Codex Gmail connector when Gmail is connected.
 - Creates follow-up lists for records that need manual full-text review.
@@ -51,7 +52,7 @@ After installing the skill and connecting Gmail, ask Codex something like:
 ```text
 Use $literature-today to create a daily literature digest.
 Send it to me@example.com every day at 10:00.
-Use English.
+Use Chinese.
 Only include relevant papers from high-impact journals, plus relevant arXiv/preprints.
 My topics and keywords are:
 - Topic: infectious disease modeling
@@ -71,6 +72,8 @@ Codex will:
 5. Write the first Markdown digest.
 6. Send the digest by Gmail if connected.
 7. Create the recurring local Codex automation.
+
+To receive the digest in Chinese, say `Use Chinese` during setup. Codex should set `language` to `zh-CN`, then translate section headings, summaries, relevance judgments, and next actions into Chinese while preserving source metadata such as titles, author names, journal names, DOI/URL, and arXiv IDs.
 
 ## Search Modes
 
@@ -129,8 +132,7 @@ Use [references/starter-config.md](references/starter-config.md) as the starter 
 
 Important settings:
 
-- `include_arxiv`: query arXiv.
-- `accept_preprints`: allow arXiv/preprint records to pass the venue filter.
+- `include_arxiv` + `accept_preprints`: query arXiv and allow relevant preprints to pass the venue filter.
 - `high_impact_only`: restrict journal articles to the configured high-impact whitelist.
 - `relevant_only`: remove query-only, title-only, weakly matched, and off-topic records.
 - `require_direct_keyword_match`: require evidence in title, abstract, or subject metadata.

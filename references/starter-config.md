@@ -175,6 +175,7 @@ Use this as the default shape for `daily-literature-digest.config.json`. Replace
 Notes:
 
 - Keep `crossref_mailto` as the recipient or another user-controlled email for polite Crossref/OpenAlex API use.
+- Set `language` to `en` for English or `zh-CN` for Simplified Chinese. When `zh-CN` is used, write the Markdown archive and email body in Chinese while preserving source metadata such as titles, authors, journal names, DOI/URL, and arXiv IDs.
 - Tune `rows`, `arxiv_rows`, and topic-keyword combinations carefully; every expanded combination adds API calls.
-- Use `include_arxiv: true` and `accept_preprints: true` when preprints are desired.
+- Use `include_arxiv: true` plus `accept_preprints: true` to query arXiv and allow relevant preprints to pass the venue filter.
 - Use `high_impact_only: true` to filter journal articles to the whitelist while still allowing accepted preprints.
