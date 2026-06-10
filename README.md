@@ -1,8 +1,8 @@
 # Literature Today
 
-A Codex skill for creating a reusable daily literature digest. It monitors Crossref, OpenAlex, and arXiv for papers matching expanded research keywords and optional topic-plus-keyword combinations, filters for relevant high-impact journal articles plus accepted preprints, saves a local Markdown archive, and sends a daily Gmail digest.
+A Codex skill for creating a reusable daily literature digest. It monitors Crossref, OpenAlex, and arXiv for papers matching expanded research keywords and optional topic-plus-keyword combinations, filters for relevant high-impact journal articles and preprints, saves a local Markdown archive, and sends a daily Gmail digest.
 
-This repository is inspired by the structure of [`xuezheng627/daily-literature-digest-skill`](https://github.com/xuezheng627/daily-literature-digest-skill), with added support for stricter high-impact filtering, accepted arXiv/preprint records, expanded search terms, and topic-keyword combination searches.
+This repository is inspired by the structure of [`xuezheng627/daily-literature-digest-skill`](https://github.com/xuezheng627/daily-literature-digest-skill), with added support for stricter high-impact filtering, arXiv/preprint records, expanded search terms, and topic-keyword combination searches.
 
 ## What It Does
 
@@ -52,8 +52,7 @@ After installing the skill and connecting Gmail, ask Codex something like:
 Use $literature-today to create a daily literature digest.
 Send it to me@example.com every day at 10:00.
 Use English.
-Accept arXiv/preprints.
-Only include relevant papers from high-impact journals or accepted preprints.
+Only include relevant papers from high-impact journals, plus relevant arXiv/preprints.
 My topics and keywords are:
 - Topic: infectious disease modeling
 - Keywords: neural networks, machine learning
