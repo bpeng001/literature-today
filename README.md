@@ -52,7 +52,7 @@ After installing the skill and connecting Gmail, ask Codex something like:
 ```text
 Use $literature-today to create a daily literature digest.
 Send it to me@example.com every day at 10:00.
-Use Chinese.
+Use English/Chinese.
 Only include relevant papers from high-impact journals, plus relevant arXiv/preprints.
 My topics and keywords are:
 - Topic: infectious disease modeling
