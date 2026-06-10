@@ -65,7 +65,7 @@ My topics and keywords are:
 
 Codex will:
 
-1. Copy `scripts/daily_literature_digest.py` into your workspace.
+1. Copy `scripts/literature_today.py` into your workspace.
 2. Create `daily-literature-digest.config.json`.
 3. Expand standalone keywords and any configured topic-keyword combinations.
 4. Run an initial fetch.

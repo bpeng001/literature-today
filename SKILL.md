@@ -21,19 +21,19 @@ Do not read paywalled full text or auto-login to publisher, university, or libra
    - Sources: Crossref/OpenAlex by default; arXiv when `include_arxiv` and `accept_preprints` are true.
    - Journal/preprint policy: high-impact journal whitelist plus accepted preprints by default.
    - Keyword groups and optional topic-keyword combination groups.
-2. Copy `scripts/daily_literature_digest.py` into the user's workspace.
+2. Copy `scripts/literature_today.py` into the user's workspace.
 3. Copy `scripts/markdown_to_docx.py` only when DOCX output is requested.
 4. Create `daily-literature-digest.config.json` in the workspace. Use `references/starter-config.md` as the starting point and replace the example user values.
 5. Run a validation fetch:
    ```bash
-   python scripts/daily_literature_digest.py --config daily-literature-digest.config.json fetch --include-seen
+   python scripts/literature_today.py --config daily-literature-digest.config.json fetch --include-seen
    ```
 6. Read the printed JSON path and write the Markdown archive to `daily-literature-digests/YYYY-MM-DD.md`.
 7. If records lack abstracts and need manual follow-up, write `daily-literature-digests/fulltext-inbox/to-download-YYYY-MM-DD.md` with DOI/URL and a note that no abstract/full text was read.
 8. Send email through Gmail when available. If Gmail is unavailable, do not ask for SMTP credentials; record `not-configured`.
 9. Mark success only after the Markdown archive exists:
    ```bash
-   python scripts/daily_literature_digest.py --config daily-literature-digest.config.json mark-success --data-file <JSON_PATH> --digest-file <DIGEST_PATH> --email-status <sent|failed|not-configured>
+   python scripts/literature_today.py --config daily-literature-digest.config.json mark-success --data-file <JSON_PATH> --digest-file <DIGEST_PATH> --email-status <sent|failed|not-configured>
    ```
 10. Create or update a Codex cron automation at the user's local time.
 
@@ -126,6 +126,6 @@ When the user says they have logged in to ScienceDirect, a university library, o
 
 ## Resources
 
-- `scripts/daily_literature_digest.py`: deterministic fetch/state script for Crossref, OpenAlex, and arXiv.
+- `scripts/literature_today.py`: deterministic fetch/state script for Crossref, OpenAlex, and arXiv.
 - `scripts/markdown_to_docx.py`: optional Markdown-to-DOCX converter.
 - `references/starter-config.md`: reusable starter config with high-impact journal, accepted-preprint, expanded-keyword, and topic-keyword examples.
