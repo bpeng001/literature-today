@@ -1,6 +1,6 @@
 # Starter Configuration
 
-Use this as the default shape for `daily-literature-digest.config.json`. Replace user-specific values before running.
+Use this as the default shape for `literature-today.config.json`. Replace user-specific values before running.
 
 ```json
 {
@@ -9,7 +9,7 @@ Use this as the default shape for `daily-literature-digest.config.json`. Replace
   "language": "en",
   "timezone": "America/New_York",
   "schedule_time": "10:00",
-  "output_dir": "daily-literature-digests",
+  "output_dir": "literature-today-digests",
   "include_arxiv": true,
   "rows": 50,
   "arxiv_rows": 25,

@@ -27,7 +27,7 @@ CROSSREF_MAILTO = ""
 LANGUAGE = "zh-CN"
 TIMEZONE = ""
 SCHEDULE_TIME = "09:00"
-DEFAULT_OUTPUT_DIR = Path("daily-literature-digests")
+DEFAULT_OUTPUT_DIR = Path("literature-today-digests")
 DEFAULT_STATE_FILE = DEFAULT_OUTPUT_DIR / "state.json"
 
 PUBLISHERS = [
@@ -981,7 +981,7 @@ def mark_success(args: argparse.Namespace) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Fetch daily literature digest candidates.")
-    parser.add_argument("--config", help="Path to daily-literature-digest.config.json.")
+    parser.add_argument("--config", help="Path to literature-today.config.json.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     fetch = subparsers.add_parser("fetch", help="Fetch candidate papers and write JSON.")

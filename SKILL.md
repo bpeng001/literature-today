@@ -23,17 +23,17 @@ Do not read paywalled full text or auto-login to publisher, university, or libra
    - Keyword groups and optional topic-keyword combination groups.
 2. Copy `scripts/literature_today.py` into the user's workspace.
 3. Copy `scripts/markdown_to_docx.py` only when DOCX output is requested.
-4. Create `daily-literature-digest.config.json` in the workspace. Use `references/starter-config.md` as the starting point and replace the example user values.
+4. Create `literature-today.config.json` in the workspace. Use `references/starter-config.md` as the starting point and replace the example user values.
 5. Run a validation fetch:
    ```bash
-   python scripts/literature_today.py --config daily-literature-digest.config.json fetch --include-seen
+   python scripts/literature_today.py --config literature-today.config.json fetch --include-seen
    ```
-6. Read the printed JSON path and write the Markdown archive to `daily-literature-digests/YYYY-MM-DD.md`.
-7. If records lack abstracts and need manual follow-up, write `daily-literature-digests/fulltext-inbox/to-download-YYYY-MM-DD.md` with DOI/URL and a note that no abstract/full text was read.
+6. Read the printed JSON path and write the Markdown archive to `literature-today-digests/YYYY-MM-DD.md`.
+7. If records lack abstracts and need manual follow-up, write `literature-today-digests/fulltext-inbox/to-download-YYYY-MM-DD.md` with DOI/URL and a note that no abstract/full text was read.
 8. Send email through Gmail when available. If Gmail is unavailable, do not ask for SMTP credentials; record `not-configured`.
 9. Mark success only after the Markdown archive exists:
    ```bash
-   python scripts/literature_today.py --config daily-literature-digest.config.json mark-success --data-file <JSON_PATH> --digest-file <DIGEST_PATH> --email-status <sent|failed|not-configured>
+   python scripts/literature_today.py --config literature-today.config.json mark-success --data-file <JSON_PATH> --digest-file <DIGEST_PATH> --email-status <sent|failed|not-configured>
    ```
 10. Create or update a Codex cron automation at the user's local time.
 
@@ -126,10 +126,10 @@ FREQ=DAILY;BYHOUR=10;BYMINUTE=0;BYSECOND=0
 When the user says they have logged in to ScienceDirect, a university library, or another publisher site:
 
 - Do not ask for passwords.
-- Use only the current active browser/session or PDFs downloaded into `daily-literature-digests/fulltext-inbox`.
+- Use only the current active browser/session or PDFs downloaded into `literature-today-digests/fulltext-inbox`.
 - Process only the explicit batch/list requested by the user.
 - Read accessible PDFs or article pages only when allowed by the active session.
-- Save summaries to `daily-literature-digests/fulltext-summaries/YYYY-MM-DD-fulltext.md`.
+- Save summaries to `literature-today-digests/fulltext-summaries/YYYY-MM-DD-fulltext.md`.
 - Do not create unattended publisher-download automation.
 
 ## Resources

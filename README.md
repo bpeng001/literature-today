@@ -14,7 +14,7 @@ This repository is inspired by the structure of [`xuezheng627/daily-literature-d
 - Supports a preprint mode with `include_arxiv` plus `accept_preprints`.
 - Summarizes only open metadata and abstracts during unattended runs.
 - Writes and emails the digest in English or Chinese, based on the setup request.
-- Writes local archives under `daily-literature-digests/`.
+- Writes local archives under `literature-today-digests/`.
 - Sends the concise digest through the Codex Gmail connector when Gmail is connected.
 - Creates follow-up lists for records that need manual full-text review.
 
@@ -66,7 +66,7 @@ My topics and keywords are:
 Codex will:
 
 1. Copy `scripts/literature_today.py` into your workspace.
-2. Create `daily-literature-digest.config.json`.
+2. Create `literature-today.config.json`.
 3. Expand standalone keywords and any configured topic-keyword combinations.
 4. Run an initial fetch.
 5. Write the first Markdown digest.
@@ -116,19 +116,19 @@ Paired-search results should show evidence for both sides of the pair in the tit
 The skill creates runtime files in the user's own workspace, not inside this repository:
 
 ```text
-daily-literature-digest.config.json
-daily-literature-digests/data/YYYY-MM-DDTHHMMSSZ.json
-daily-literature-digests/YYYY-MM-DD.md
-daily-literature-digests/fulltext-inbox/to-download-YYYY-MM-DD.md
-daily-literature-digests/fulltext-summaries/
-daily-literature-digests/state.json
+literature-today.config.json
+literature-today-digests/data/YYYY-MM-DDTHHMMSSZ.json
+literature-today-digests/YYYY-MM-DD.md
+literature-today-digests/fulltext-inbox/to-download-YYYY-MM-DD.md
+literature-today-digests/fulltext-summaries/
+literature-today-digests/state.json
 ```
 
 Do not commit generated configs, state files, emails, downloaded PDFs, or full-text notes if they reveal private research interests, email addresses, institutional access traces, or unpublished work.
 
 ## Configuration
 
-Use [references/starter-config.md](references/starter-config.md) as the starter shape for `daily-literature-digest.config.json`.
+Use [references/starter-config.md](references/starter-config.md) as the starter shape for `literature-today.config.json`.
 
 Important settings:
 
@@ -147,7 +147,7 @@ Codex local automations depend on your local Codex runner/environment. If your c
 
 The unattended daily digest is intentionally abstract/open-metadata based. For records with no abstract or restricted full text:
 
-1. Open the follow-up list under `daily-literature-digests/fulltext-inbox/`.
+1. Open the follow-up list under `literature-today-digests/fulltext-inbox/`.
 2. Log in to your university or publisher access yourself in the active browser, or provide downloaded PDFs.
 3. Ask Codex to process that explicit batch.
 

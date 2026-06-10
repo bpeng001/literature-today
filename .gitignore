@@ -1,0 +1,5 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+literature-today.config.json
+literature-today-digests/
