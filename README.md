@@ -1,16 +1,17 @@
 # Literature Today
 
-A Codex skill for creating a reusable daily literature digest. It monitors Crossref, OpenAlex, and arXiv for papers matching expanded research keywords and optional topic-plus-keyword combinations, filters for relevant high-impact journal articles and preprints, saves a local Markdown archive, and sends a daily Gmail digest.
+A Codex skill for creating a reusable daily literature digest. It monitors Crossref, OpenAlex, PubMed, and arXiv for papers matching expanded research keywords and optional topic-plus-keyword combinations, filters for relevant high-impact journal articles and preprints, saves a local Markdown archive, and sends a daily Gmail digest.
 
-This repository is inspired by the structure of [`xuezheng627/daily-literature-digest-skill`](https://github.com/xuezheng627/daily-literature-digest-skill), with added support for stricter high-impact filtering, arXiv/preprint records, expanded search terms, and topic-keyword combination searches.
+This repository is inspired by the structure of [`xuezheng627/daily-literature-digest-skill`](https://github.com/xuezheng627/daily-literature-digest-skill), with added support for PubMed, stricter high-impact filtering, arXiv/preprint records, expanded search terms, and topic-keyword combination searches.
 
 ## What It Does
 
 - Runs a daily literature digest at your chosen local time.
-- Searches Crossref/OpenAlex and, when enabled, arXiv.
+- Searches Crossref/OpenAlex, PubMed/MEDLINE, and, when enabled, arXiv.
 - Expands broad keyword groups automatically, such as turning `measles outbreak analysis` into related terms like `measles outbreak`, `measles transmission`, `measles epidemic`, and `measles vaccination coverage`.
 - Supports topic-plus-keyword combination searches, such as `infectious disease && neural network` or `epidemic modeling && machine learning`.
 - Filters journal articles to a configurable high-impact journal whitelist.
+- Adds PubMed coverage for medicine, clinical research, epidemiology, and biostatistics/statistics topics.
 - Supports a preprint mode with `include_arxiv` plus `accept_preprints`.
 - Summarizes only open metadata and abstracts during unattended runs.
 - Writes and emails the digest in English or Chinese, based on the setup request.
@@ -132,6 +133,8 @@ Use [references/starter-config.md](references/starter-config.md) as the starter 
 
 Important settings:
 
+- `include_pubmed`: query PubMed/MEDLINE through NCBI E-utilities.
+- `pubmed_email`: user-controlled contact email for NCBI E-utilities requests.
 - `include_arxiv` + `accept_preprints`: query arXiv and allow relevant preprints to pass the venue filter.
 - `high_impact_only`: restrict journal articles to the configured high-impact whitelist.
 - `relevant_only`: remove query-only, title-only, weakly matched, and off-topic records.

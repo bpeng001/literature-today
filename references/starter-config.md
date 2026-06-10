@@ -6,13 +6,16 @@ Use this as the default shape for `literature-today.config.json`. Replace user-s
 {
   "recipient_email": "user@example.com",
   "crossref_mailto": "user@example.com",
+  "pubmed_email": "user@example.com",
   "language": "en",
   "timezone": "America/New_York",
   "schedule_time": "10:00",
   "output_dir": "literature-today-digests",
   "include_arxiv": true,
+  "include_pubmed": true,
   "rows": 50,
   "arxiv_rows": 25,
+  "pubmed_rows": 25,
   "max_papers": 30,
   "high_impact_only": true,
   "accept_preprints": true,
@@ -175,7 +178,9 @@ Use this as the default shape for `literature-today.config.json`. Replace user-s
 Notes:
 
 - Keep `crossref_mailto` as the recipient or another user-controlled email for polite Crossref/OpenAlex API use.
+- Keep `pubmed_email` as a user-controlled email for NCBI E-utilities requests. Add `ncbi_api_key` only when the user explicitly wants to use an NCBI API key.
 - Set `language` to `en` for English or `zh-CN` for Simplified Chinese. When `zh-CN` is used, write the Markdown archive and email body in Chinese while preserving source metadata such as titles, authors, journal names, DOI/URL, and arXiv IDs.
 - Tune `rows`, `arxiv_rows`, and topic-keyword combinations carefully; every expanded combination adds API calls.
+- Use `include_pubmed: true` for biomedical, clinical, epidemiology, and biostatistics/statistics literature indexed in PubMed/MEDLINE.
 - Use `include_arxiv: true` plus `accept_preprints: true` to query arXiv and allow relevant preprints to pass the venue filter.
 - Use `high_impact_only: true` to filter journal articles to the whitelist while still allowing accepted preprints.

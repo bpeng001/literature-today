@@ -29,6 +29,9 @@ TIMEZONE = ""
 SCHEDULE_TIME = "09:00"
 DEFAULT_OUTPUT_DIR = Path("literature-today-digests")
 DEFAULT_STATE_FILE = DEFAULT_OUTPUT_DIR / "state.json"
+INCLUDE_PUBMED = False
+PUBMED_EMAIL = ""
+NCBI_API_KEY = ""
 
 PUBLISHERS = [
     {
@@ -137,6 +140,7 @@ EXCLUDED_TITLE_PATTERNS = [
 USER_AGENT_BASE = "CodexDailyLiteratureDigest/1.0"
 ARXIV_API = "https://export.arxiv.org/api/query"
 ARXIV_NS = {"atom": "http://www.w3.org/2005/Atom", "arxiv": "http://arxiv.org/schemas/atom"}
+NCBI_EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 
 
 def utc_now() -> dt.datetime:
@@ -272,13 +276,17 @@ def apply_runtime_config(args: argparse.Namespace) -> None:
     config = read_config(getattr(args, "config", None))
     global RECIPIENT_EMAIL, CROSSREF_MAILTO, LANGUAGE, TIMEZONE, SCHEDULE_TIME, PUBLISHERS, KEYWORD_GROUPS
     global TOPIC_KEYWORD_GROUPS
+    global INCLUDE_PUBMED, PUBMED_EMAIL, NCBI_API_KEY
     global HIGH_IMPACT_ONLY, HIGH_IMPACT_JOURNALS, HIGH_IMPACT_JOURNAL_PREFIXES
     global ACCEPT_PREPRINTS, RELEVANT_ONLY, MINIMUM_RELEVANCE_SCORE, REQUIRE_DIRECT_KEYWORD_MATCH, REQUIRE_ABSTRACT
     RECIPIENT_EMAIL = clean_text(config.get("recipient_email"))
     CROSSREF_MAILTO = clean_text(config.get("crossref_mailto")) or RECIPIENT_EMAIL
+    PUBMED_EMAIL = clean_text(config.get("pubmed_email")) or CROSSREF_MAILTO or RECIPIENT_EMAIL
+    NCBI_API_KEY = clean_text(config.get("ncbi_api_key"))
     LANGUAGE = clean_text(config.get("language")) or LANGUAGE
     TIMEZONE = clean_text(config.get("timezone")) or TIMEZONE
     SCHEDULE_TIME = clean_text(config.get("schedule_time")) or SCHEDULE_TIME
+    INCLUDE_PUBMED = bool(config.get("include_pubmed", False))
     HIGH_IMPACT_ONLY = bool(config.get("high_impact_only", False))
     HIGH_IMPACT_JOURNALS = clean_list(config.get("high_impact_journals"))
     HIGH_IMPACT_JOURNAL_PREFIXES = clean_list(config.get("high_impact_journal_prefixes"))
@@ -303,6 +311,7 @@ def apply_runtime_config(args: argparse.Namespace) -> None:
         args.lookback_days = int_setting(args.lookback_days, config, "lookback_days", 7)
         args.rows = int_setting(args.rows, config, "rows", 20)
         args.arxiv_rows = int_setting(args.arxiv_rows, config, "arxiv_rows", 25)
+        args.pubmed_rows = int_setting(args.pubmed_rows, config, "pubmed_rows", 25)
         args.max_papers = int_setting(args.max_papers, config, "max_papers", 30)
         args.sleep = float_setting(args.sleep, config, "sleep", 0.25)
         if args.include_arxiv is None:
@@ -617,6 +626,182 @@ def openalex_doi_url(doi: str) -> str:
     return "https://api.openalex.org/works?" + urllib.parse.urlencode(params)
 
 
+def ncbi_params(extra: dict[str, str]) -> dict[str, str]:
+    params = {"tool": "LiteratureToday"}
+    if PUBMED_EMAIL:
+        params["email"] = PUBMED_EMAIL
+    if NCBI_API_KEY:
+        params["api_key"] = NCBI_API_KEY
+    params.update(extra)
+    return params
+
+
+def pubmed_query(term: str) -> str:
+    def part(value: str) -> str:
+        value = value.strip().replace('"', "")
+        return f'"{value}"[Title/Abstract]'
+
+    if " && " in term:
+        pieces = [part(item) for item in term.split(" && ") if item.strip()]
+        return " AND ".join(pieces)
+    return part(term)
+
+
+def pubmed_esearch_url(term: str, from_date: str, until_date: str, rows: int) -> str:
+    params = ncbi_params(
+        {
+            "db": "pubmed",
+            "term": pubmed_query(term),
+            "retmode": "json",
+            "retmax": str(rows),
+            "sort": "pub+date",
+            "datetype": "pdat",
+            "mindate": from_date,
+            "maxdate": until_date,
+        }
+    )
+    return f"{NCBI_EUTILS}/esearch.fcgi?" + urllib.parse.urlencode(params)
+
+
+def pubmed_efetch_url(pmids: list[str]) -> str:
+    params = ncbi_params(
+        {
+            "db": "pubmed",
+            "id": ",".join(pmids),
+            "retmode": "xml",
+        }
+    )
+    return f"{NCBI_EUTILS}/efetch.fcgi?" + urllib.parse.urlencode(params)
+
+
+def child_text(element: ET.Element | None, path: str) -> str:
+    if element is None:
+        return ""
+    found = element.find(path)
+    if found is None:
+        return ""
+    return clean_text("".join(found.itertext()))
+
+
+def pubmed_pubdate(article: ET.Element) -> str:
+    pubdate = article.find("./MedlineCitation/Article/Journal/JournalIssue/PubDate")
+    if pubdate is None:
+        return ""
+    year_text = child_text(pubdate, "Year") or child_text(pubdate, "MedlineDate")[:4]
+    if not year_text or not year_text[:4].isdigit():
+        return ""
+    year = int(year_text[:4])
+    month_text = child_text(pubdate, "Month")
+    day_text = child_text(pubdate, "Day")
+    months = {
+        "jan": 1,
+        "feb": 2,
+        "mar": 3,
+        "apr": 4,
+        "may": 5,
+        "jun": 6,
+        "jul": 7,
+        "aug": 8,
+        "sep": 9,
+        "oct": 10,
+        "nov": 11,
+        "dec": 12,
+    }
+    if month_text.isdigit():
+        month = int(month_text)
+    else:
+        month = months.get(month_text[:3].lower(), 1)
+    day = int(day_text) if day_text.isdigit() else 1
+    try:
+        return dt.date(year, month, day).isoformat()
+    except ValueError:
+        return dt.date(year, 1, 1).isoformat()
+
+
+def pubmed_authors(article: ET.Element, max_authors: int = 6) -> str:
+    names: list[str] = []
+    authors = article.findall("./MedlineCitation/Article/AuthorList/Author")
+    for author in authors[:max_authors]:
+        collective = child_text(author, "CollectiveName")
+        if collective:
+            names.append(collective)
+            continue
+        fore = child_text(author, "ForeName") or child_text(author, "Initials")
+        last = child_text(author, "LastName")
+        name = " ".join(part for part in [fore, last] if part).strip()
+        if name:
+            names.append(name)
+    if len(authors) > max_authors:
+        names.append("et al.")
+    return "; ".join(names)
+
+
+def pubmed_article_id(article: ET.Element, id_type: str) -> str:
+    for item in article.findall("./PubmedData/ArticleIdList/ArticleId"):
+        if item.attrib.get("IdType") == id_type:
+            return clean_text(item.text)
+    return ""
+
+
+def normalize_pubmed_article(article: ET.Element, query_term: str) -> dict[str, Any] | None:
+    pmid = child_text(article, "./MedlineCitation/PMID")
+    title = child_text(article, "./MedlineCitation/Article/ArticleTitle")
+    if not pmid or not title or is_excluded_title(title):
+        return None
+    abstract_parts = []
+    for abstract_text in article.findall("./MedlineCitation/Article/Abstract/AbstractText"):
+        label = clean_text(abstract_text.attrib.get("Label"))
+        text = clean_text("".join(abstract_text.itertext()))
+        if label and text:
+            abstract_parts.append(f"{label}: {text}")
+        elif text:
+            abstract_parts.append(text)
+    abstract = clean_text(" ".join(abstract_parts))
+    journal = child_text(article, "./MedlineCitation/Article/Journal/Title") or child_text(article, "./MedlineCitation/Article/Journal/ISOAbbreviation")
+    subjects = []
+    for descriptor in article.findall("./MedlineCitation/MeshHeadingList/MeshHeading/DescriptorName"):
+        text = clean_text("".join(descriptor.itertext()))
+        if text:
+            subjects.append(text)
+    for keyword in article.findall("./MedlineCitation/KeywordList/Keyword"):
+        text = clean_text("".join(keyword.itertext()))
+        if text:
+            subjects.append(text)
+    subjects = list(dict.fromkeys(subjects))
+    doi = normalize_doi(pubmed_article_id(article, "doi"))
+    pmcid = pubmed_article_id(article, "pmc")
+    hits, score = keyword_hits(title, abstract, subjects)
+    if not hits:
+        hits = [keyword_group_for_term(query_term)]
+        score = 1
+    return {
+        "title": title,
+        "doi": doi,
+        "pmid": pmid,
+        "pmcid": pmcid,
+        "url": doi_url(doi) or f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/",
+        "publisher": "PubMed",
+        "publisher_key": "pubmed",
+        "crossref_publisher": "",
+        "journal": journal,
+        "published_date": pubmed_pubdate(article),
+        "authors": pubmed_authors(article),
+        "abstract": abstract,
+        "abstract_source": "PubMed" if abstract else "",
+        "subjects": subjects,
+        "keyword_hits": hits,
+        "query_term": query_term,
+        "metadata_match_confidence": "direct" if score > 1 else "query-only",
+        "relevance_score": score,
+        "priority": priority_for(score, abstract),
+        "openalex_id": "",
+        "openalex_url": "",
+        "open_access_url": f"https://pmc.ncbi.nlm.nih.gov/articles/{pmcid}/" if pmcid else "",
+        "pdf_url": "",
+        "source": "PubMed",
+    }
+
+
 def normalize_crossref_item(item: dict[str, Any], publisher: dict[str, Any], query_term: str) -> dict[str, Any] | None:
     title = clean_text(item.get("title"))
     doi = normalize_doi(item.get("DOI"))
@@ -797,6 +982,42 @@ def fetch_arxiv_papers(args: argparse.Namespace, window_from: dt.datetime, windo
     return list(papers_by_key.values()), errors
 
 
+def fetch_pubmed_papers(args: argparse.Namespace, from_date: str, until_date: str, seen_keys: set[str]) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
+    papers_by_key: dict[str, dict[str, Any]] = {}
+    errors: list[dict[str, str]] = []
+    terms = configured_search_terms()
+    for term in terms:
+        try:
+            payload = http_json(pubmed_esearch_url(term, from_date, until_date, args.pubmed_rows))
+            pmids = [clean_text(pmid) for pmid in payload.get("esearchresult", {}).get("idlist", []) if clean_text(pmid)]
+        except Exception as exc:  # noqa: BLE001
+            errors.append({"source": "PubMed", "term": term, "error": str(exc)})
+            continue
+        if not pmids:
+            time.sleep(args.sleep)
+            continue
+        try:
+            xml_text = http_text(pubmed_efetch_url(pmids))
+            root = ET.fromstring(xml_text)
+        except Exception as exc:  # noqa: BLE001
+            errors.append({"source": "PubMed", "term": term, "error": str(exc)})
+            continue
+        for article in root.findall("./PubmedArticle"):
+            paper = normalize_pubmed_article(article, term)
+            if not paper:
+                continue
+            state_key = f"pmid:{paper['pmid']}"
+            if state_key in seen_keys and not args.include_seen:
+                continue
+            paper["state_key"] = state_key
+            key = f"doi:{paper['doi']}" if paper.get("doi") else state_key
+            existing = papers_by_key.get(key)
+            if not existing or paper["relevance_score"] > existing["relevance_score"]:
+                papers_by_key[key] = paper
+        time.sleep(args.sleep)
+    return list(papers_by_key.values()), errors
+
+
 def fetch_candidates(args: argparse.Namespace) -> Path:
     output_dir = Path(args.output_dir)
     state_file = Path(args.state_file)
@@ -867,6 +1088,15 @@ def fetch_candidates(args: argparse.Namespace) -> Path:
                     papers_by_key[key] = paper
             time.sleep(args.sleep)
 
+    if INCLUDE_PUBMED:
+        pubmed_papers, pubmed_errors = fetch_pubmed_papers(args, from_date, until_date, seen_keys)
+        errors.extend(pubmed_errors)
+        for paper in pubmed_papers:
+            key = f"doi:{paper['doi']}" if paper.get("doi") else paper["state_key"]
+            existing = papers_by_key.get(key)
+            if not existing or paper["relevance_score"] > existing["relevance_score"]:
+                papers_by_key[key] = paper
+
     if args.include_arxiv:
         arxiv_papers, arxiv_errors = fetch_arxiv_papers(args, window_from, window_until, seen_keys)
         errors.extend(arxiv_errors)
@@ -919,9 +1149,11 @@ def fetch_candidates(args: argparse.Namespace) -> Path:
         "topic_keyword_groups": TOPIC_KEYWORD_GROUPS,
         "publishers": [
             *(crossref_sources if HIGH_IMPACT_ONLY else PUBLISHERS),
+            *([{"key": "pubmed", "display": "PubMed", "source_type": "biomedical", "url": "https://pubmed.ncbi.nlm.nih.gov/"}] if INCLUDE_PUBMED else []),
             *([{"key": "arxiv", "display": "arXiv", "source_type": "preprint", "url": "https://arxiv.org/"}] if args.include_arxiv else []),
         ],
         "selection_policy": {
+            "include_pubmed": INCLUDE_PUBMED,
             "high_impact_only": HIGH_IMPACT_ONLY,
             "high_impact_journals": HIGH_IMPACT_JOURNALS,
             "high_impact_journal_prefixes": HIGH_IMPACT_JOURNAL_PREFIXES,
@@ -938,6 +1170,7 @@ def fetch_candidates(args: argparse.Namespace) -> Path:
             "AI interpretation must be based only on title, abstract, keywords, and metadata in this JSON.",
             "Do not infer research goals, methods, or results when abstract is missing.",
             "When high_impact_only is true, journal articles have been filtered to the configured high-impact journal whitelist.",
+            "When include_pubmed is true, PubMed records are searched through NCBI E-utilities and filtered with the same relevance and venue policy.",
             "When accept_preprints is true, arXiv/preprint records can pass the venue filter if they satisfy the relevance policy.",
             "When topic_keyword_groups are configured, each expanded topic term is searched in combination with each expanded keyword term.",
             "When relevant_only is true, query-only matches and weak metadata matches have been removed according to the configured relevance policy.",
@@ -992,6 +1225,7 @@ def build_parser() -> argparse.ArgumentParser:
     fetch.add_argument("--until-date", help="UTC ISO timestamp or date for forced end.")
     fetch.add_argument("--rows", type=int, help="Crossref rows per publisher/keyword query.")
     fetch.add_argument("--arxiv-rows", type=int, help="arXiv rows per keyword query.")
+    fetch.add_argument("--pubmed-rows", type=int, help="PubMed rows per keyword query.")
     fetch.add_argument("--max-papers", type=int)
     fetch.add_argument("--sleep", type=float)
     fetch.add_argument("--include-arxiv", dest="include_arxiv", action="store_true", default=None)

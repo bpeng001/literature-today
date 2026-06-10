@@ -1,6 +1,6 @@
 ---
 name: literature-today
-description: Create, update, run, or troubleshoot a reusable daily literature digest that expands research topics and keywords, searches Crossref/OpenAlex/arXiv, filters relevant high-impact journal articles plus accepted preprints, archives Markdown or optional DOCX digests, and sends daily email summaries through Gmail in English or Chinese. Use when the user asks for daily or scheduled literature monitoring, keyword/topic paper alerts, high-impact paper digests, arXiv/preprint-inclusive research updates, topic-plus-keyword search combinations, Chinese/English digest emails, or automated Gmail literature summaries.
+description: Create, update, run, or troubleshoot a reusable daily literature digest that expands research topics and keywords, searches Crossref/OpenAlex/PubMed/arXiv, filters relevant high-impact journal articles plus accepted preprints, archives Markdown or optional DOCX digests, and sends daily email summaries through Gmail in English or Chinese. Use when the user asks for daily or scheduled literature monitoring, keyword/topic paper alerts, medicine/epidemiology/statistics literature digests, high-impact paper digests, PubMed or arXiv/preprint-inclusive research updates, topic-plus-keyword search combinations, Chinese/English digest emails, or automated Gmail literature summaries.
 ---
 
 # Literature Today
@@ -18,7 +18,7 @@ Do not read paywalled full text or auto-login to publisher, university, or libra
    - Digest language. If the user says "Use Chinese", set `language` to `zh-CN` and write the Markdown archive and email body in Chinese.
    - Timezone and daily schedule.
    - Workspace path and Python command.
-   - Sources: Crossref/OpenAlex by default; enable preprint mode with `include_arxiv` plus `accept_preprints`.
+   - Sources: Crossref/OpenAlex by default; enable PubMed with `include_pubmed`; enable preprint mode with `include_arxiv` plus `accept_preprints`.
    - Journal/preprint policy: high-impact journal whitelist plus accepted preprints by default.
    - Keyword groups and optional topic-keyword combination groups.
 2. Copy `scripts/literature_today.py` into the user's workspace.
@@ -67,6 +67,7 @@ Treat matching as inclusive during fetch, but strict during final selection.
 Include a paper in the main digest only when it passes the configured policy:
 
 - `high_impact_only`: journal articles must match `high_impact_journals` or `high_impact_journal_prefixes`.
+- `include_pubmed`: query PubMed/MEDLINE through NCBI E-utilities for biomedical, clinical, epidemiology, and biostatistics/statistics literature.
 - `include_arxiv` plus `accept_preprints`: query arXiv and allow relevant preprints to pass the venue filter.
 - `relevant_only`: remove query-only, title-only, weakly matched, and off-topic records.
 - `require_direct_keyword_match`: require title, abstract, or subject metadata evidence.
@@ -98,6 +99,7 @@ For each included paper, report:
 For no-abstract/title-only records, do not infer research goal, method, or result. State: `No abstract/full text was available; this is a title-level judgment only.`
 
 Mention Crossref, OpenAlex, or arXiv API errors in the digest and summarize any successfully fetched results.
+Mention PubMed/NCBI E-utilities errors as well when PubMed is enabled.
 
 ## Automation Prompt Requirements
 
@@ -109,6 +111,7 @@ The automation prompt must include:
 - Recipient email, language, schedule time, timezone, and output directory.
 - Explicit instruction to write the Markdown archive and Gmail email body in the configured language, including Chinese when requested.
 - Original user keywords and a note that expanded terms live in `keyword_groups`.
+- Enabled source set, including whether PubMed and arXiv/preprints are enabled.
 - Topic-keyword combination instructions when `topic_keyword_groups` is configured.
 - Instruction to summarize open metadata/abstracts only.
 - Instruction to use Gmail connector if available.
